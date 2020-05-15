@@ -1,0 +1,86 @@
+{'_script': {
+    'lang': settings.ES_SCRIPT_LANG,
+    'script_file': 'sort_service-region',
+    'type': 'number',
+    'params': {
+        'city_tag_id': sort_params['city_tag_id'] if 'city_tag_id' in sort_params else -1,
+        'city_province_tag_id': sort_params[
+            'city_province_tag_id'] if 'city_province_tag_id' in sort_params else -1,
+    },
+    'order': 'desc',
+    '_cache': True,
+}}
+
+
+
+if (doc['doctor.hospital.city_tag_id'].value==city_tag_id ||
+    doc['hospital.city_tag_id'].value==city_tag_id) {
+    return 2;
+} else if (doc['doctor.hospital.city_province_tag_id'].value==city_province_tag_id ||
+    doc['hospital.city_province_tag_id'].value==city_province_tag_id) {
+    return 1;
+} else {
+    return 0;
+}
+
+
+
+ curl -X POST "http://172.16.32.37:9200/_scripts/service-region?pretty" -H 'Content-Type: application/json' -d'
+{
+  "script": {
+    "lang": "painless",
+    "source": "if ((doc[\u0027doctor.hospital.city_tag_id\u0027].size() > 0 && doc[\u0027doctor.hospital.city_tag_id\u0027].value==params.city_tag_id) || (doc[\u0027hospital.city_tag_id\u0027].size() > 0 && doc[\u0027hospital.city_tag_id\u0027].value==params.city_tag_id)) {return 2} else if (( doc[\u0027doctor.hospital.city_province_tag_id\u0027].size() > 0 && doc[\u0027doctor.hospital.city_province_tag_id\u0027].value==params.city_province_tag_id )|| (doc[\u0027hospital.city_province_tag_id\u0027].size() > 0 && doc[\u0027hospital.city_province_tag_id\u0027].value==params.city_province_tag_id)) {return 1} else {return 0}"
+    }
+}'
+
+
+
+ curl  -H "Content-Type: application/json"  -X GET "http://172.16.32.37:9200/gm-dbmw-service/_search?pretty" -d '
+{
+    "sort":{
+        "_script":{
+            "order":"desc",
+            "type":"number",
+            "script":{
+                "id":"service-region",
+                "params": {
+                    "city_tag_id": 328,
+                     "city_province_tag_id": 259
+
+                }
+            }
+        }
+    }
+}'
+
+
+-------------test----------------------
+
+
+ curl  -H "Content-Type: application/json"  -X GET "http://es6.paas-test.env/gm_test-service/_search?pretty" -d '
+{
+    "sort":{
+        "_script":{
+            "order":"desc",
+            "type":"number",
+            "script":{
+                "id":"service-region",
+                "params": {
+                    "city_tag_id": 328,
+                     "city_province_tag_id": 259
+
+                }
+            }
+        }
+    }
+}'
+
+
+
+curl -X POST "http://es6.paas-test.env/_scripts/service-region?pretty" -H 'Content-Type: application/json' -d '
+{
+  "script": {
+    "lang": "painless",
+    "source": "if (doc[\u0027doctor.hospital.city_tag_id\u0027].value==params.city_tag_id || doc[\u0027hospital.city_tag_id\u0027].value==params.city_tag_id) {return 2} else if (doc[\u0027doctor.hospital.city_province_tag_id\u0027].value==params.city_province_tag_id || doc[\u0027hospital.city_province_tag_id\u0027].value==params.city_province_tag_id) {return 1} else {return 0}"
+    }
+}'

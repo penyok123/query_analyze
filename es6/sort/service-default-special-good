@@ -1,0 +1,73 @@
+{'_script': {
+    'lang': settings.ES_SCRIPT_LANG,
+    'script_file': 'sort_service-default-special',
+    'type': 'number',
+    'params': {
+        'special_id': sort_params['special_id'],
+    },
+    'order': 'asc',
+    '_cache': True,
+}}
+
+
+for (sp in _source.special_rank) {if (sp['special_id']==special_id) {return sp['rank'];}}return 999999;
+
+
+
+
+
+curl -X POST "http://172.16.32.37:9200/_scripts/service-default-special?pretty" -H 'Content-Type: application/json' -d'
+{
+  "script": {
+    "lang": "painless",
+    "source": " if (params[\u0027_source\u0027].containsKey(\u0027special_rank\u0027)){for (sp in params[\u0027_source\u0027][\u0027special_rank\u0027] ) {if (sp[\u0027special_id\u0027]== params.special_id) {return sp[\u0027rank\u0027]}}return 999999}else{return 999999}"
+    }
+}'
+
+
+curl  -H "Content-Type: application/json"  -X GET "http://172.16.32.37:9200/gm-dbmw-service/_search?pretty" -d '
+{"sort":{
+        "_script":{
+            "order":"asc",
+            "type":"number",
+            "script":{
+                "id":"service-default-special",
+                "params": {
+                    "special_id":2943
+                }
+            }
+        }
+    },"size":10,"_source":{"include":["id","special_rank"]}
+}'
+
+
+
+_____________________________________________________________
+
+ curl -X POST "http://es6.paas-test.env/_scripts/service-default-special?pretty" -H 'Content-Type: application/json' -d '
+{
+  "script": {
+    "lang": "painless",
+    "source": " if (params[\u0027_source\u0027].containsKey(\u0027special_rank\u0027)){for (sp in params[\u0027_source\u0027][\u0027special_rank\u0027] ) {if (sp[\u0027special_id\u0027]== params.special_id) {return sp[\u0027rank\u0027]}}return 999999}else{return 999999}"
+    }
+}'
+
+  curl  -H "Content-Type: application/json"  -X GET "http://es6.paas-test.env/gm_test-service/_search?pretty" -d '
+{"sort":{
+        "_script":{
+            "order":"asc",
+            "type":"number",
+            "script":{
+                "id":"service-default-special",
+                "params": {
+                    "special_id":510
+                }
+            }
+        }
+    },"size":10,"_source":{"include":["id","special_rank"]}
+}'
+
+
+
+
+

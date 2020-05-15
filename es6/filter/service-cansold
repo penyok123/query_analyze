@@ -1,0 +1,56 @@
+data = [doc['can_sold_time_range.start_time'].values, doc['can_sold_time_range.end_time'].values].transpose()
+can_sold = false
+can_sold = data.any{
+    it[0] <= now && it[1]>now
+}
+return can_sold
+
+
+{
+    'script': {
+                'script_file': 'filter_service-cansold',
+                'lang': settings.ES_SCRIPT_LANG,
+                'params': {
+                    'now': datetime_to_timestamp_millis(now)
+        }
+    }
+}
+
+
+--------------------------------------------
+
+curl  -H "Content-Type: application/json"  -X GET "http://localhost:9200/gm_test-service/_search?pretty" -d '{
+    "sort":{
+        "_script":{
+            "order":"desc",
+            "type":"number",
+            "script":{
+                "lang":"painless",
+                "source":"if (params[\u0027_source\u0027].containsKey(\u0027can_sold_time_range\u0027)){if (doc[\u0027can_sold_time_range.start_time_long\u0027].value <= params.now  && params.now < doc[\u0027can_sold_time_range.end_time_long\u0027].value ){return 1}else{return 0}}else{return 0}",
+                "params":{"now":157502174}
+             }
+        }
+    }
+}'
+
+curl  -H "Content-Type: application/json"  -X GET "http://localhost:9200/gm_test-service/_search?pretty" -d '{
+    "sort":{
+        "_script":{
+            "order":"desc",
+            "type":"number",
+            "script":{
+                "id":"painless",
+                "params":{"now":157502174}
+             }
+        }
+    }
+}'
+
+
+curl -X POST "localhost:9200/_scripts/service-cansold?pretty" -H 'Content-Type: application/json' -d '
+{
+  "script": {
+    "lang": "painless",
+    "source": "if (params[\u0027_source\u0027].containsKey(\u0027can_sold_time_range\u0027)){if (doc[\u0027can_sold_time_range.start_time_long\u0027].value <= params.now  && params.now < doc[\u0027can_sold_time_range.end_time_long\u0027].value ){return 1}else{return 0}}else{return 0}"
+    }
+}'

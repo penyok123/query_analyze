@@ -1,0 +1,74 @@
+{'_script': {
+    'lang': settings.ES_SCRIPT_LANG,
+    'script_file': 'sort_service-time-valid',
+    'type': 'number',
+    'order': 'desc',
+}
+
+
+def now = DateTime.now().getMillis();
+if (doc['is_can_be_sold'].value==1 && doc['start_time'].value<=now && doc['end_time'].value>now) {
+    return 1;
+} else {
+    return 0;
+}
+
+
+------------------------------
+
+
+
+
+ curl -X POST "http://172.16.32.37:9200/_scripts/service-time-valid?pretty" -H 'Content-Type: application/json' -d'
+{
+  "script": {
+    "lang": "painless",
+    "source": "def can_sold=true;if (doc[\u0027start_time_long\u0027].size() > 0 && doc[\u0027is_can_be_sold\u0027].value == can_sold ){if (doc[\u0027start_time_long\u0027].value <= params.now  &&  params.now < doc[\u0027end_time_long\u0027].value ) {return 1}else{return 0}}else{return 0}"
+    }
+}'
+
+
+curl  -H "Content-Type: application/json"  -X GET "http://172.16.32.37:9200/gm-dbmw-service/_search?pretty" -d '{
+    "sort":{
+        "_script":{
+            "order":"desc",
+            "type":"number",
+            "script":{
+                "id":"service-time-valid",
+                "params":{"now":1575021745}
+             }
+        }
+    }
+}'
+
+
+
+
+
+
+_________________________________
+
+ curl -X POST "http://es6.paas-test.env/_scripts/service-time-valid?pretty" -H 'Content-Type: application/json' -d'
+{
+  "script": {
+    "lang": "painless",
+    "source": "def can_sold=true;if (doc[\u0027start_time_long\u0027].value > 0 && doc[\u0027is_can_be_sold\u0027].value == can_sold ){if (doc[\u0027start_time_long\u0027].value <= params.now  &&  params.now < doc[\u0027end_time_long\u0027].value ) {return 1}else{return 0}}else{return 0}"
+    }
+}'
+
+
+curl  -H "Content-Type: application/json"  -X GET "http://es6.paas-test.env/gm_test-service/_search?pretty" -d '{
+    "sort":{
+        "_script":{
+            "order":"desc",
+            "type":"number",
+            "script":{
+                "id":"service-time-valid",
+                "params":{"now":1575021745}
+             }
+        }
+    }
+}'
+
+
+

@@ -1,0 +1,85 @@
+{'_script': {
+    'lang': settings.ES_SCRIPT_LANG,
+    'script_file': 'sort_service-price-3',
+    'type': 'number',
+    'order': 'asc',
+    'params': {
+        'now_str': now_str
+    }
+}},
+
+def price = 99999999;
+for (period in _source.lowest_price) {
+    if (period.start_time<=now_str && period.end_time>now_str) {
+        price = period.price;
+        break;
+    }
+}
+return price;
+
+---------------------------------------------
+
+ curl -X POST "http://172.16.32.37:9200/_scripts/service-price-3?pretty" -H 'Content-Type: application/json' -d'
+{
+  "script": {
+    "lang": "painless",
+    "source": "def price = 9999999;if (params[\u0027_source\u0027].containsKey(\u0027lowest_price\u0027)){  for (period in params[\u0027_source\u0027][\u0027lowest_price\u0027]){if(period.start_time_long <= params.now && params.now < period.end_time_long){return period.price}}return price}else{return price}"
+    }
+}'
+
+
+ curl -X POST "http://172.16.32.37:9200/_scripts/service-price-3?pretty" -H 'Content-Type: application/json' -d'
+{
+  "script": {
+    "lang": "painless",
+    "source": "def price = 9999999;if (params[\u0027_source\u0027].containsKey(\u0027lowest_price\u0027)){  for (period in params[\u0027_source\u0027][\u0027lowest_price\u0027]){if(period.start_time_long > 0 &&  period.start_time_long <= params.now && params.now < period.end_time_long){return period.price}}return price}else{return price}"
+    }
+}'
+
+
+
+
+ curl  -H "Content-Type: application/json"  -X GET "http://172.16.32.37:9200/gm-dbmw-service-read/_search?pretty" -d '
+{"sort":{
+        "_script":{
+            "order":"asc",
+            "type":"number",
+            "script":{
+                "id":"service-price-3",
+                "params": {
+                    "now":1575021745
+                }
+            }
+        }
+    },"size":10,"_source":{"include":["id","lowest_price"]}
+}'
+
+
+ curl  -H "Content-Type: application/json"  -X GET "http://172.16.32.37:9200/gm-dbmw-service-read/_search?pretty" -d '{"query": {"function_score": {"query": {"bool": {"should": [{"multi_match": {"query": "紧致", "type": "cross_fields", "operator": "and", "fields": ["short_description^8", "doctor.name^4", "doctor.hospital.name^3", "doctor.hospital.city_name^2", "doctor.hospital.city_province_name^2", "closure_tags^2", "doctor.hospital.officer_name^3"], "analyzer": "keyword"}}, {"nested": {"path": "sku_list", "query": {"multi_match": {"query": "紧致", "fields": ["sku_list.name^2"], "operator": "and", "type": "cross_fields"}}}}], "must": [[{"term": {"is_online": true}}, {"nested": {"path": "sku_list", "query": {"function_score": {"query": {"bool": {"must": [{"range": {"sku_list.start_time": {"lte": "now"}}}, {"range": {"sku_list.end_time": {"gt": "now"}}}], "should": [{"range": {"sku_list.start_time": {"lte": "now"}}}, {"range": {"sku_list.end_time": {"gt": "now"}}}, {"constant_score": {"filter": {"match_phrase": {"sku_list.name": {"analyzer": "keyword", "query": "紧致"}}}}}], "minimum_should_match": 1}}, "boost_mode": "replace", "score_mode": "max", "min_score": 0}}, "inner_hits": {"size": 1, "sort": ["_score", {"sku_list.price": "asc"}]}}}]], "minimum_should_match": 1}}, "boost_mode": "replace", "score_mode": "max", "functions": [{"filter": {"match_phrase": {"short_description_by_standard_analyzer": {"analyzer": "standard", "query": "紧致"}}}, "weight": 1000}, {"filter": {"match_phrase": {"doctor.name_by_standard_analyzer": {"analyzer": "standard", "query": "紧致"}}}, "weight": 1000}, {"filter": {"match_phrase": {"doctor.hospital.name_by_standard_analyzer": {"analyzer": "standard", "query": "紧致"}}}, "weight": 1000}, {"filter": {"match_phrase": {"doctor.hospital.city_name_by_standard_analyzer": {"analyzer": "standard", "query": "紧致"}}}, "weight": 1000}, {"filter": {"match_phrase": {"doctor.hospital.city_province_name_by_standard_analyzer": {"analyzer": "standard", "query": "紧致"}}}, "weight": 1000}, {"filter": {"match_phrase": {"closure_tags_by_standard_analyzer": {"analyzer": "standard", "query": "紧致"}}}, "weight": 1000}, {"filter": {"match_phrase": {"doctor.hospital.officer_name_by_standard_analyzer": {"analyzer": "standard", "query": "紧致"}}}, "weight": 1000}, {"filter": {"nested": {"path": "sku_list", "query": {"match_phrase": {"sku_list.name_by_standard_analyzer": {"query": "紧致", "analyzer": "standard"}}}}}, "weight": 1000}, {"filter": {"term": {"short_description": "紧致"}}, "weight": 1000}, {"filter": {"term": {"doctor.name": "紧致"}}, "weight": 1000}, {"filter": {"term": {"doctor.hospital.name": "紧致"}}, "weight": 1000}, {"filter": {"term": {"doctor.hospital.city_name": "紧致"}}, "weight": 1000}, {"filter": {"term": {"doctor.hospital.city_province_name": "紧致"}}, "weight": 1000}, {"filter": {"term": {"closure_tags": "紧致"}}, "weight": 1000}, {"filter": {"term": {"doctor.hospital.officer_name": "紧致"}}, "weight": 1000}, {"filter": {"term": {"sku_list.name": "紧致"}}, "weight": 1000}]}}, "sort": [{"_script": {"type": "number", "order": "asc", "script": {"id": "service-sink", "params": {"now": 1575540190}}}}, {"_script": {"type": "number", "order": "desc", "script": {"id": "service-time-valid", "params": {"now": 1575540190}}}}, {"_script": {"type": "number", "order": "asc", "script": {"id": "service-sink-by-org", "params": {"now": 1575540190}}}}, {"_script": {"type": "number", "order": "desc", "script": {"id": "service-region-related", "params": {"user_city_tag_id": 328, "in_whitelist": 0}}}}, {"_script": {"order": "desc", "type": "number", "script": {"id": "service-tag-first", "params": {"query": "紧致"}}}}, {"_score": {"order": "desc"}}, {"is_promote": {"order": "desc"}}, {"smart_rank2": {"order": "desc"}}, {"ordering": {"order": "asc"}}, {"start_time": {"order": "desc"}}], "highlight": {"fields": {"short_description_pre": {}, "doctor.hospital.name": {}}, "pre_tags": ["<ems>"], "post_tags": ["</ems>"], "fragment_size": 10000, "require_field_match": false}}
+
+
+------------------------------test---------------------------
+ curl -X POST "http://es6.paas-test.env/_scripts/service-price-3?pretty" -H 'Content-Type: application/json' -d '
+{
+  "script": {
+    "lang": "painless",
+    "source": "def price = 9999999;if (params[\u0027_source\u0027].containsKey(\u0027lowest_price\u0027)){  for (period in params[\u0027_source\u0027][\u0027lowest_price\u0027]){if(period.start_time_long > 0 &&  period.start_time_long <= params.now && params.now < period.end_time_long){return period.price}}return price}else{return price}"
+    }
+}'
+
+  curl  -H "Content-Type: application/json"  -X GET "http://es6.paas-test.env/gm_test-service/_search?pretty" -d '
+{"sort":{
+        "_script":{
+            "order":"asc",
+            "type":"number",
+            "script":{
+                "id":"service-price-3",
+                "params": {
+                    "now":1575021745
+                }
+            }
+        }
+    },"size":10,"_source":{"include":["id","lowest_price"]}
+}'
+
+

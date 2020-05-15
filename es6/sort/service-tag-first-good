@@ -1,0 +1,107 @@
+{'_script': {
+    'lang': settings.ES_SCRIPT_LANG,
+    'script_file': 'sort_service-tag-first',
+    'type': 'number',
+    'params': {
+        'query': sort_params['query'],
+    },
+    'order': 'desc',
+}
+
+
+if (query in doc['closure_tags'].values){return 1;}else {return 0;}
+
+
+
+
+curl -X POST "http://172.16.32.37:9200/_scripts/service-tag-first?pretty" -H 'Content-Type: application/json' -d'
+{
+  "script": {
+    "lang": "painless",
+    "source": " if (params[\u0027_source\u0027].containsKey(\u0027closure_tags\u0027)){for (sp in params[\u0027_source\u0027][\u0027closure_tags\u0027] ) {if (sp == params.query) {return 1}}return 0}else{return 0}"
+    }
+}'
+
+
+curl  -H "Content-Type: application/json"  -X GET "http://172.16.32.37:9200/gm-dbmw-service/_search?pretty" -d '
+{
+    "sort":{
+        "_script":{
+            "order":"desc",
+            "type":"number",
+            "script":{
+                "id":"service-tag-first",
+                "params": {
+                    "query":"水光针"
+                }
+
+            }
+        }
+    }
+}'
+
+-------------------------
+http://172.16.32.37:9200
+
+curl -X POST "http://172.16.32.37:9200/_scripts/service-tag-first?pretty" -H 'Content-Type: application/json' -d '
+{
+  "script": {
+    "lang": "painless",
+    "source": "if (params[\u0027_source\u0027].containsKey(\u0027closure_tags\u0027)){return 1}else{return 0}"
+    }
+}'
+
+ curl  -H "Content-Type: application/json"  -X GET "http://172.16.32.37:9200/gm-dbmw-service/_search?pretty" -d '
+{
+    "sort":{
+        "_script":{
+            "order":"desc",
+            "type":"number",
+            "script":{
+                "id":"service-tag-first",
+                "params": {
+                    "query":"水光针"
+                }
+
+            }
+        }
+    }
+}'
+
+
+------------------------------------------------
+
+curl -X POST "http://es6.paas-test.env/_scripts/service-tag-first?pretty" -H 'Content-Type: application/json' -d '
+{
+  "script": {
+    "lang": "painless",
+    "source": "if (params[\u0027_source\u0027].containsKey(\u0027closure_tags\u0027)){return 1}else{return 0}"
+    }
+}'
+
+ curl  -H "Content-Type: application/json"  -X GET "http://es6.paas-test.env/gm_test-service/_search?pretty" -d '
+{
+    "sort":{
+        "_script":{
+            "order":"desc",
+            "type":"number",
+            "script":{
+                "id":"service-tag-first",
+                "params": {
+                    "query":"水光针"
+                }
+
+            }
+        }
+    }
+}'
+
+
+
+ curl -X POST "localhost:9200/_scripts/service-tag-first?pretty" -H 'Content-Type: application/json' -d '
+{
+  "script": {
+    "lang": "painless",
+    "source": " if (params[\u0027_source\u0027].containsKey(\u0027closure_tags\u0027)){for (sp in params[\u0027_source\u0027][\u0027closure_tags\u0027] ) {if (sp == params.query) {return 1}}return 0}else{return 0}"
+    }
+}'

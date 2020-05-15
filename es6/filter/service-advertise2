@@ -1,0 +1,64 @@
+def now = DateTime.now().getMillis();
+for (ad in _source.advertise_info) {
+    if (ad['start_time_epoch']*1000<=now &&
+            ad['end_time_epoch']*1000>now && ad['position'].contains(adver_position)
+    ) {
+        if (ad_tag_ids){
+            if(ad_tag_ids.disjoint(ad['ad_tag_ids'])){
+                continue;
+            }
+        }
+        if (advertise_user_city_tag_id in ad["show_city_tags"]) {
+            if (null == adver_searchword) {
+                return true;
+            }else if (adver_searchword in ad['searchwords']) {
+                return true;
+            }
+        }
+
+    }
+
+}
+return false;
+
+
+
+
+
+--------------------------------------------
+
+curl  -H "Content-Type: application/json"  -X GET "http://localhost:9200/gm_test-service/_search?pretty" -d '{
+    "sort":{
+        "_script":{
+            "order":"desc",
+            "type":"number",
+            "script":{
+                "lang":"painless",
+                "source":"if (params[\u0027_source\u0027].containsKey(\u0027can_sold_time_range\u0027)){if (doc[\u0027can_sold_time_range.start_time_long\u0027].value <= params.now  && params.now < doc[\u0027can_sold_time_range.end_time_long\u0027].value ){return 1}else{return 0}}else{return 0}",
+                "params":{"now":157502174}
+             }
+        }
+    }
+}'
+
+curl  -H "Content-Type: application/json"  -X GET "http://localhost:9200/gm_test-service/_search?pretty" -d '{
+    "sort":{
+        "_script":{
+            "order":"desc",
+            "type":"number",
+            "script":{
+                "id":"painless",
+                "params":{"now":157502174}
+             }
+        }
+    }
+}'
+
+
+curl -X POST "localhost:9200/_scripts/service-cansold?pretty" -H 'Content-Type: application/json' -d '
+{
+  "script": {
+    "lang": "painless",
+    "source": "if (params[\u0027_source\u0027].containsKey(\u0027can_sold_time_range\u0027)){if (doc[\u0027can_sold_time_range.start_time_long\u0027].value <= params.now  && params.now < doc[\u0027can_sold_time_range.end_time_long\u0027].value ){return 1}else{return 0}}else{return 0}"
+    }
+}'

@@ -1,0 +1,60 @@
+{'_script': {
+    'lang': settings.ES_SCRIPT_LANG,
+    'script_file': 'sort_sku-default',
+    'type': 'number',
+    'params': {
+        'user_city_tag_id': sort_params['user_city_tag_id'] if 'user_city_tag_id' in sort_params else -1,
+    },
+    'order': 'desc',
+    '_cache': True,
+}
+
+(doc['doctor.hospital.city_tag_id'].value==user_city_tag_id) ? 1 : 0
+
+
+ curl -X POST "http://172.16.32.37:9200/_scripts/sku-default?pretty" -H 'Content-Type: application/json' -d'
+{
+  "script": {
+    "lang": "painless",
+    "source": "(doc[\u0027doctor.hospital.city_tag_id\u0027].size() > 0 && doc[\u0027doctor.hospital.city_tag_id\u0027].value==params.user_city_tag_id) ? 1 : 0"
+  }
+}'
+
+
+ curl  -H "Content-Type: application/json"  -X GET "http://172.16.32.37:9200/gm-dbmw-service/_search?pretty" -d '
+ {"sort":{"_script":{"order":"desc","type":"number","script":{"id":"sku-default","params":{"user_city_tag_id":328}}}}}'
+
+
+------------------------------------------------------------------------------------------------------------
+
+
+
+
+curl "http://172.16.32.37:9200/gm-dbmw-service/_search?pretty"^C
+
+
+curl -XDELETE 'http://172.16.32.37:9200/_scripts/sku-default?pretty&pretty  删除一个索引
+
+------------------------------------
+ curl -X POST "http://es6.paas-test.env/_scripts/sku-default?pretty" -H 'Content-Type: application/json' -d'
+{
+  "script": {
+    "lang": "painless",
+    "source": "doc[\u0027doctor.hospital.city_tag_id\u0027].value==params.user_city_tag_id ? 1 : 0"
+  }
+}
+'
+
+ curl  -H "Content-Type: application/json"  -X GET "http://es6.paas-test.env/gm_test-service/_search?pretty" -d '
+ {
+    "sort":{
+        "_script":{
+            "order":"desc",
+            "type":"number",
+            "script":{
+                "id":"sku-default",
+                "params":{"user_city_tag_id":328}
+                }
+            }
+        }
+ }'

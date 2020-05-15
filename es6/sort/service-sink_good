@@ -1,0 +1,94 @@
+{'_script': {
+    'lang': settings.ES_SCRIPT_LANG,
+    'script_file': 'sort_service-sink',
+    'type': 'number',
+    'order': 'asc',
+}
+
+
+if (doc['is_sink'].value) {
+    return 1;
+} else if (doc['ticket_sink_start_time'].value && doc['ticket_sink_end_time'].value) {
+    def now = DateTime.now().getMillis();
+    if (doc['ticket_sink_start_time'].value<=now && now<doc['ticket_sink_end_time'].value) {
+        return 1;
+    } else {
+        return 0;
+    }
+} else {
+    return 0;
+}
+
+-- ------------------------------------------
+
+
+curl -X POST "http://172.16.32.37:9200/_scripts/service-sink?pretty" -H 'Content-Type: application/json' -d '
+{
+  "script": {
+    "lang": "painless",
+    "source": "def is_sink_false = true;if (doc[\u0027is_sink\u0027].size() > 0 && doc[\u0027is_sink\u0027].value == is_sink_false){return 1}else{ if (doc[\u0027org_sink_start_time_long\u0027].size() > 0 && doc[\u0027org_sink_end_time_long\u0027].size() > 0 && doc[\u0027org_sink_start_time_long\u0027].value > 0 && doc[\u0027org_sink_end_time_long\u0027].value > 0) {if(doc[\u0027org_sink_start_time_long\u0027].value <= params.now && params.now < doc[\u0027org_sink_end_time_long\u0027].value){ return 1;}else{return 0;}}else{return 0;}}"}
+}'
+
+curl  -H "Content-Type: application/json"  -X GET "http://172.16.32.37:9200/gm-dbmw-service/_search?pretty" -d '
+{
+    "sort":{
+        "_script":{
+            "order":"desc",
+            "type":"number",
+            "script":{
+                "id":"service-sink",
+                "params":{"now":1575021745}
+            }
+        }
+    }
+}'
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+curl -X POST "http://172.16.32.37:9200/_scripts/service-sink?pretty" -H 'Content-Type: application/json' -d '
+{
+  "script": {
+    "lang": "painless",
+    "source": "def is_sink_false = true;if (doc[\u0027is_sink\u0027].size() > 0){return 1}else{return 0}"
+    }
+}'
+
+
+
+--------------------------------------------
+
+curl -X POST "http://es6.paas-test.env/_scripts/service-sink?pretty" -H 'Content-Type: application/json' -d '
+{
+  "script": {
+    "lang": "painless",
+    "source": "def is_sink_false = true;if (doc[\u0027is_sink\u0027].value == is_sink_false){return 1}else{if (doc[\u0027org_sink_start_time_long\u0027].value > 0 && doc[\u0027org_sink_end_time_long\u0027].value > 0) {if(doc[\u0027org_sink_start_time_long\u0027].value <= params.now && params.now < doc[\u0027org_sink_end_time_long\u0027].value){ return 1;}else{return 0;}}else{return 0;}}"}
+}'
+
+curl  -H "Content-Type: application/json"  -X GET "http://es6.paas-test.env/gm_test-service/_search?pretty" -d '
+{
+    "sort":{
+        "_script":{
+            "order":"desc",
+            "type":"number",
+            "script":{
+                "id":"service-sink",
+                "params":{"now":1575021745}
+            }
+        }
+    }
+}'

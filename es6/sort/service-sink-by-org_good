@@ -1,0 +1,63 @@
+{
+    '_script': {
+        'lang': settings.ES_SCRIPT_LANG,
+        'script_file': 'sort_service-sink-by-org',
+        'type': 'number',
+        'order': 'asc',
+    }
+}
+if(doc['org_sink_start_time'].value && doc['org_sink_end_time'].value) {def now = DateTime.now().getMillis()if(doc['org_sink_start_time'].value <= now && now < doc['org_sink_end_time'].value){ return 1;}else{return 0;}}else{return 0;}
+
+
+=================================
+
+curl  -H "Content-Type: application/json"  -X GET "http://172.16.32.37:9200/gm-dbmw-service/_search?pretty" -d '{
+    "sort":{
+        "_script":{
+            "order":"desc",
+            "type":"number",
+            "script":{
+                "id":"service-sink-by-org",
+                "params":{"now":1575021745}
+             }
+        }
+    }
+}'
+
+
+
+curl -X POST "172.16.32.37:9200/_scripts/service-sink-by-org?pretty" -H 'Content-Type: application/json' -d '
+{
+  "script": {
+    "lang": "painless",
+    "source": "if (doc[\u0027org_sink_start_time_long\u0027].size() > 0 && doc[\u0027org_sink_end_time_long\u0027].size() > 0) {if(doc[\u0027org_sink_start_time_long\u0027].value <= params.now && params.now < doc[\u0027org_sink_end_time_long\u0027].value){ return 1;}else{return 0;}}else{return 0;}"}
+}'
+
+
+
+
+
+_________________________________
+
+
+curl  -H "Content-Type: application/json"  -X GET "http://es6.paas-test.env/gm_test-service/_search?pretty" -d '{
+    "sort":{
+        "_script":{
+            "order":"desc",
+            "type":"number",
+            "script":{
+                "id":"service-sink-by-org",
+                "params":{"now":1575021745}
+             }
+        }
+    }
+}'
+
+
+
+curl -X POST "http://es6.paas-test.env/_scripts/service-sink-by-org?pretty" -H 'Content-Type: application/json' -d '
+{
+  "script": {
+    "lang": "painless",
+    "source": "if (doc[\u0027org_sink_start_time_long\u0027].value > 0 && doc[\u0027org_sink_end_time_long\u0027].value > 0) {if(doc[\u0027org_sink_start_time_long\u0027].value <= params.now && params.now < doc[\u0027org_sink_end_time_long\u0027].value){ return 1;}else{return 0;}}else{return 0;}"}
+}'

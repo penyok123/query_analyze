@@ -1,0 +1,28 @@
+def now = DateTime.now().getMillis();
+for (ad in _source.advertise_info) {
+    if (ad['start_time_epoch']*1000<=now &&
+        ad['end_time_epoch']*1000>now &&
+        ad['position'].contains(adver_position)) {
+        if (null == adver_searchword) {
+            return true;
+        } else if (adver_searchword in ad['searchwords']) {
+            return true;
+        }
+    }
+}
+return false;
+
+
+
+
+--------------------------------------------
+
+ curl -X POST "localhost:9200/_scripts/service-price-3?pretty" -H 'Content-Type: application/json' -d '
+{
+  "script": {
+    "lang": "painless",
+    "source": "def price = 99999999;if (params[\u0027_source\u0027].containsKey(\u0027lowest_price\u0027)){  for (period in params[\u0027_source\u0027][\u0027lowest_price\u0027]){if(period.start_time_long <= params.now && params.now < period.end_time_long){return period.price}}return 9999}else{return price}"
+    }
+}'
+
+
